@@ -34,7 +34,7 @@ class SinaSpider(RedisSpider):
             item['article_urls'] = article['url']
             request = scrapy.Request(url=item['article_urls'], meta={'meta_article': item}, callback=self.article_parse,
                                      dont_filter=True)
-            request.meta["PhantomJs"] = True
+            request.meta["ChromeDriver"] = True
             yield request
 
     def article_parse(self, response):
@@ -65,11 +65,11 @@ class SinaSpider(RedisSpider):
 
         # 发送请求到每个帖子的评论页
         if item['comment_url'] != "NULL":
-            # 制定规则爬取每篇评论，需利用phantomjs+selenium自动加载更多评论
+            # 制定规则爬取每篇评论，需利用chromedriver+selenium自动加载更多评论
 
             request = scrapy.Request(url=item['comment_url'], meta={'meta_final': item}, callback=self.comment_parse, \
                                      dont_filter=True)
-            request.meta['PhantomJs'] = True
+            request.meta['ChromeDriver'] = True
             yield request
         else:
             item['comments'] = "NULL"

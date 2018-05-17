@@ -48,27 +48,32 @@ class RandomProxy(object):
         request.headers['Proxy-Authorization'] = "Basic " + base64_userpass
 
 
-# article PhantomJs中间件
-class ArticlePhantomJsMiddleware(object):
+# article ChromeDriver中间件
+class ArticleChromeDriverMiddleware(object):
     def process_request(self, request, spider):
-        if request.meta.has_key('PhantomJs'):
+        if request.meta.has_key('ChromeDriver'):
             options = Options()
             options.set_headless(headless=True)
             driver = webdriver.Chrome(chrome_options=options)
-            driver.get(request.url)
-            # 睡眠1.5秒等待PhantomJs加载资源
-            time.sleep(1.5)
-            body = driver.page_source
-            url = driver.current_url
+            try:
+                driver.get(request.url)
+                # 睡眠1.5秒等待ChromeDriver加载资源
+                time.sleep(1.5)
+                body = driver.page_source
+                url = driver.current_url
+                # 无论是否在try还是except里return，finally都会执行
+                return scrapy.http.HtmlResponse(url, body=body, request=request, encoding='utf-8')
+            except Exception:
+                return scrapy.http.HtmlResponse(request.url, body=body, request=request, encoding='utf-8')
             # driver.service.process.send_signal(signal.SIGTERM)
-            driver.quit()
-            return scrapy.http.HtmlResponse(url, body=body, request=request, encoding='utf-8')
+            finally:
+                driver.quit()
 
 
-# comment PhantomJs中间件
-class CommentPhantomJsMiddleware(object):
+# comment ChromeDriver中间件
+class CommentChromeDriverMiddleware(object):
     def process_request(self, request, spider):
-        if request.meta.has_key('PhantomJs'):
+        if request.meta.has_key('ChromeDriver'):
             options = Options()
             options.set_headless(headless=True)
             driver = webdriver.Chrome(chrome_options=options)
