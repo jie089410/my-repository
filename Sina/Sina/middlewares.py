@@ -7,6 +7,7 @@
 
 from settings import USER_AGENTS
 from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
 from lxml import etree
 from scrapy.contrib.downloadermiddleware.useragent import UserAgentMiddleware
 from scrapy.contrib.downloadermiddleware.httpproxy import HttpProxyMiddleware
@@ -51,15 +52,16 @@ class RandomProxy(object):
 class ArticlePhantomJsMiddleware(object):
     def process_request(self, request, spider):
         if request.meta.has_key('PhantomJs'):
-            driver = webdriver.PhantomJS()
+            options = Options()
+            options.set_headless(headless=True)
+            driver = webdriver.Chrome(chrome_options=options)
             driver.get(request.url)
             # 睡眠1.5秒等待PhantomJs加载资源
             time.sleep(1.5)
             body = driver.page_source
             url = driver.current_url
             # driver.service.process.send_signal(signal.SIGTERM)
-            # 不使用driver.quit防止出现double free，即释放两次资源
-            driver.close()
+            driver.quit()
             return scrapy.http.HtmlResponse(url, body=body, request=request, encoding='utf-8')
 
 
@@ -67,8 +69,9 @@ class ArticlePhantomJsMiddleware(object):
 class CommentPhantomJsMiddleware(object):
     def process_request(self, request, spider):
         if request.meta.has_key('PhantomJs'):
-            driver = webdriver.PhantomJS()
-            # 注意可能有的帖子无评论
+            options = Options()
+            options.set_headless(headless=True)
+            driver = webdriver.Chrome(chrome_options=options)
             driver.get(request.url)
             time.sleep(0.5)
             selector = etree.HTML(driver.page_source)
@@ -81,7 +84,7 @@ class CommentPhantomJsMiddleware(object):
             body = driver.page_source
             url = driver.current_url
             # 解决driver.quit出现错误
-            driver.service.process.send_signal(signal.SIGTERM)
+            # driver.service.process.send_signal(signal.SIGTERM)
             driver.quit()
             # 返回处理后请求响应
             return scrapy.http.HtmlResponse(url, body=body, request=request, encoding='utf-8')
